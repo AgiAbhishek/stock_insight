@@ -24,23 +24,33 @@ export default function Portfolio() {
   const symbolsParam = symbols.join(',');
 
   // Fetch live quotes every 15 seconds
-  const { data: quotes = [], isError: quotesError, isLoading: quotesLoading } = useQuery<Quote[]>({
+  const { 
+    data: quotes = [], 
+    isError: quotesError, 
+    isLoading: quotesLoading,
+    isSuccess: quotesSuccess 
+  } = useQuery<Quote[]>({
     queryKey: ["/api/quotes", symbolsParam],
     enabled: symbols.length > 0,
     refetchInterval: 15000, // 15 seconds
     staleTime: 10000,
-    retry: 3,
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retry: 2,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 15000),
   });
 
   // Fetch metrics every 60 seconds
-  const { data: metrics = [], isError: metricsError, isLoading: metricsLoading } = useQuery<Metrics[]>({
+  const { 
+    data: metrics = [], 
+    isError: metricsError, 
+    isLoading: metricsLoading,
+    isSuccess: metricsSuccess 
+  } = useQuery<Metrics[]>({
     queryKey: ["/api/metrics", symbolsParam],
     enabled: symbols.length > 0,
     refetchInterval: 60000, // 60 seconds
     staleTime: 50000,
-    retry: 3,
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 60000),
+    retry: 2,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   // Calculate portfolio rows and groups
@@ -57,18 +67,21 @@ export default function Portfolio() {
     return calculatePortfolioSummary(portfolioRows);
   }, [portfolioRows]);
 
-  // Error handling
-  const hasErrors = quotesError || metricsError || portfolioRows.some(row => row.hasError);
+  // Error handling - only show errors when there are actual network failures
+  const hasActualErrors = (quotesError && symbols.length > 0) || (metricsError && symbols.length > 0);
+  const hasDataErrors = portfolioRows.some(row => row.hasError);
+  const hasAnyErrors = hasActualErrors || hasDataErrors;
   
   // Update error state but reset banner on successful data
   useEffect(() => {
-    if (hasErrors && !showErrorBanner) {
+    if (hasAnyErrors && !showErrorBanner) {
       setShowErrorBanner(true);
       setErrorCount(prev => prev + 1);
-    } else if (!hasErrors && showErrorBanner && (quotes.length > 0 || metrics.length > 0)) {
+    } else if (!hasAnyErrors && showErrorBanner && (quotesSuccess || metricsSuccess)) {
       setShowErrorBanner(false);
+      setErrorCount(0); // Reset count on success
     }
-  }, [hasErrors, showErrorBanner, quotes.length, metrics.length]);
+  }, [hasAnyErrors, showErrorBanner, quotesSuccess, metricsSuccess]);
 
   const lastUpdated = useMemo(() => {
     const timestamps = [
@@ -121,17 +134,17 @@ export default function Portfolio() {
                 </h1>
               </div>
               <div className={`hidden sm:flex items-center space-x-2 px-3 py-1 rounded-full ${
-                hasErrors ? 'bg-red-50' : 'bg-green-50'
+                hasAnyErrors ? 'bg-red-50' : 'bg-green-50'
               }`}>
                 <div className={`w-2 h-2 rounded-full ${
                   isLoading ? 'bg-yellow-500 animate-spin' : 
-                  hasErrors ? 'bg-red-500 animate-pulse' : 
+                  hasAnyErrors ? 'bg-red-500 animate-pulse' : 
                   'bg-green-500 animate-pulse'
                 }`}></div>
                 <span className={`text-sm font-medium ${
-                  hasErrors ? 'text-red-700' : 'text-green-700'
+                  hasAnyErrors ? 'text-red-700' : 'text-green-700'
                 }`}>
-                  {isLoading ? 'Updating...' : hasErrors ? 'Connection Issues' : 'Live Updates Active'}
+                  {isLoading ? 'Updating...' : hasAnyErrors ? 'Connection Issues' : 'Live Updates Active'}
                 </span>
               </div>
             </div>
@@ -163,7 +176,7 @@ export default function Portfolio() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Error Banner */}
-        {showErrorBanner && (
+        {showErrorBanner && hasAnyErrors && (
           <ErrorBanner 
             onDismiss={() => setShowErrorBanner(false)}
             errorCount={errorCount}
