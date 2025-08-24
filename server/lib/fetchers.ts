@@ -13,7 +13,7 @@ export async function fetchQuotes(symbols: string[]): Promise<Quote[]> {
   const results: Quote[] = [];
   const timestamp = Date.now();
 
-  console.log(`Fetching quotes for ${symbols.length} symbols: ${symbols.slice(0, 3).join(', ')}${symbols.length > 3 ? '...' : ''}`);
+  // console.log(`Fetching quotes for ${symbols.length} symbols`);
 
   for (const symbol of symbols) {
     const normalizedSymbol = normalizeSymbol(symbol);
@@ -55,7 +55,7 @@ export async function fetchMetrics(symbols: string[]): Promise<Metrics[]> {
   const results: Metrics[] = [];
   const timestamp = Date.now();
 
-  console.log(`Fetching metrics for ${symbols.length} symbols: ${symbols.slice(0, 3).join(', ')}${symbols.length > 3 ? '...' : ''}`);
+  // console.log(`Fetching metrics for ${symbols.length} symbols`);
 
   for (const symbol of symbols) {
     const normalizedSymbol = normalizeSymbol(symbol);

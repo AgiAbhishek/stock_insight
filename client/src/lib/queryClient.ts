@@ -29,7 +29,19 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey.join("/") as string, {
+    // Handle query keys with parameters
+    let url: string;
+    if (queryKey.length === 2 && typeof queryKey[1] === 'string') {
+      // Handle ['/api/quotes', 'SYMBOL1,SYMBOL2'] format
+      url = `${queryKey[0]}?symbols=${queryKey[1]}`;
+    } else {
+      // Handle simple paths
+      url = queryKey.join("/") as string;
+    }
+    
+    // console.log('QueryClient fetching:', url);
+    
+    const res = await fetch(url, {
       credentials: "include",
     });
 
@@ -38,7 +50,9 @@ export const getQueryFn: <T>(options: {
     }
 
     await throwIfResNotOk(res);
-    return await res.json();
+    const data = await res.json();
+    // console.log('QueryClient received:', data);
+    return data;
   };
 
 export const queryClient = new QueryClient({

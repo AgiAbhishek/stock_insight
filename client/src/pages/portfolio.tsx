@@ -23,12 +23,15 @@ export default function Portfolio() {
   const symbols = useMemo(() => getSymbolsFromHoldings(holdings), [holdings]);
   const symbolsParam = symbols.join(',');
 
+  // Symbols to fetch
+
   // Fetch live quotes every 15 seconds
   const { 
     data: quotes = [], 
     isError: quotesError, 
     isLoading: quotesLoading,
-    isSuccess: quotesSuccess 
+    isSuccess: quotesSuccess,
+    error: quotesErrorDetail
   } = useQuery<Quote[]>({
     queryKey: ["/api/quotes", symbolsParam],
     enabled: symbols.length > 0,
@@ -43,7 +46,8 @@ export default function Portfolio() {
     data: metrics = [], 
     isError: metricsError, 
     isLoading: metricsLoading,
-    isSuccess: metricsSuccess 
+    isSuccess: metricsSuccess,
+    error: metricsErrorDetail
   } = useQuery<Metrics[]>({
     queryKey: ["/api/metrics", symbolsParam],
     enabled: symbols.length > 0,
@@ -52,6 +56,10 @@ export default function Portfolio() {
     retry: 2,
     retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
+
+  // Log errors for debugging (remove after fixing)
+  // if (quotesError) console.log('Quotes error:', quotesErrorDetail);
+  // if (metricsError) console.log('Metrics error:', metricsErrorDetail);
 
   // Calculate portfolio rows and groups
   const portfolioRows = useMemo(() => {
@@ -67,10 +75,12 @@ export default function Portfolio() {
     return calculatePortfolioSummary(portfolioRows);
   }, [portfolioRows]);
 
-  // Error handling - only show errors when there are actual network failures
-  const hasActualErrors = (quotesError && symbols.length > 0) || (metricsError && symbols.length > 0);
-  const hasDataErrors = portfolioRows.some(row => row.hasError);
-  const hasAnyErrors = hasActualErrors || hasDataErrors;
+  // Error handling - only show errors when quotes fail (metrics can fail gracefully)
+  const hasCriticalErrors = quotesError && symbols.length > 0;
+  const hasDataErrors = portfolioRows.some(row => row.hasError && !row.cmp); // Only error if no price data
+  const hasAnyErrors = hasCriticalErrors || hasDataErrors;
+  
+  // Debug: console.log('Quotes:', quotes.length, 'Metrics:', metrics.length, 'Errors:', hasAnyErrors);
   
   // Update error state but reset banner on successful data
   useEffect(() => {
