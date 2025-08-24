@@ -1,0 +1,234 @@
+[
+  {
+    "name": "HDFC Bank",
+    "symbol": null,
+    "exchange": "HDFCBANK",
+    "purchasePrice": 1490.0,
+    "quantity": 50.0,
+    "sector": "Banking & Finance"
+  },
+  {
+    "name": "Bajaj Finance",
+    "symbol": null,
+    "exchange": "BAJFINANCE",
+    "purchasePrice": 6466.0,
+    "quantity": 15.0,
+    "sector": "Banking & Finance"
+  },
+  {
+    "name": "ICICI Bank",
+    "symbol": null,
+    "exchange": "532174",
+    "purchasePrice": 780.0,
+    "quantity": 84.0,
+    "sector": "Banking & Finance"
+  },
+  {
+    "name": "Bajaj Housing",
+    "symbol": null,
+    "exchange": "544252",
+    "purchasePrice": 130.0,
+    "quantity": 504.0,
+    "sector": "Real Estate"
+  },
+  {
+    "name": "Savani Financials",
+    "symbol": null,
+    "exchange": "511577",
+    "purchasePrice": 24.0,
+    "quantity": 1080.0,
+    "sector": "Banking & Finance"
+  },
+  {
+    "name": "Affle India",
+    "symbol": null,
+    "exchange": "AFFLE",
+    "purchasePrice": 1151.0,
+    "quantity": 50.0,
+    "sector": "Technology"
+  },
+  {
+    "name": "LTI Mindtree",
+    "symbol": null,
+    "exchange": "LTIM",
+    "purchasePrice": 4775.0,
+    "quantity": 16.0,
+    "sector": "Technology"
+  },
+  {
+    "name": "KPIT Tech",
+    "symbol": null,
+    "exchange": "542651",
+    "purchasePrice": 672.0,
+    "quantity": 61.0,
+    "sector": "Technology"
+  },
+  {
+    "name": "Tata Tech",
+    "symbol": null,
+    "exchange": "544028",
+    "purchasePrice": 1072.0,
+    "quantity": 63.0,
+    "sector": "Technology"
+  },
+  {
+    "name": "BLS E-Services",
+    "symbol": null,
+    "exchange": "544107",
+    "purchasePrice": 232.0,
+    "quantity": 191.0,
+    "sector": "Technology"
+  },
+  {
+    "name": "Tanla",
+    "symbol": null,
+    "exchange": "532790",
+    "purchasePrice": 1134.0,
+    "quantity": 45.0,
+    "sector": "Technology"
+  },
+  {
+    "name": "Dmart",
+    "symbol": null,
+    "exchange": "DMART",
+    "purchasePrice": 3777.0,
+    "quantity": 27.0,
+    "sector": "Consumer Goods"
+  },
+  {
+    "name": "Tata Consumer",
+    "symbol": null,
+    "exchange": "532540",
+    "purchasePrice": 845.0,
+    "quantity": 90.0,
+    "sector": "Consumer Goods"
+  },
+  {
+    "name": "Pidilite",
+    "symbol": null,
+    "exchange": "500331",
+    "purchasePrice": 2376.0,
+    "quantity": 36.0,
+    "sector": "Consumer Goods"
+  },
+  {
+    "name": "Tata Power",
+    "symbol": null,
+    "exchange": "500400",
+    "purchasePrice": 224.0,
+    "quantity": 225.0,
+    "sector": "Energy"
+  },
+  {
+    "name": "KPI Green",
+    "symbol": null,
+    "exchange": "542323",
+    "purchasePrice": 875.0,
+    "quantity": 50.0,
+    "sector": "Energy"
+  },
+  {
+    "name": "Suzlon",
+    "symbol": null,
+    "exchange": "532667",
+    "purchasePrice": 44.0,
+    "quantity": 450.0,
+    "sector": "Energy"
+  },
+  {
+    "name": "Gensol",
+    "symbol": null,
+    "exchange": "542851",
+    "purchasePrice": 998.0,
+    "quantity": 45.0,
+    "sector": "Energy"
+  },
+  {
+    "name": "Hariom Pipes",
+    "symbol": null,
+    "exchange": "543517",
+    "purchasePrice": 580.0,
+    "quantity": 60.0,
+    "sector": null
+  },
+  {
+    "name": "Astral",
+    "symbol": null,
+    "exchange": "ASTRAL",
+    "purchasePrice": 1517.0,
+    "quantity": 56.0,
+    "sector": null
+  },
+  {
+    "name": "Polycab",
+    "symbol": null,
+    "exchange": "542652",
+    "purchasePrice": 2818.0,
+    "quantity": 28.0,
+    "sector": null
+  },
+  {
+    "name": "Clean Science",
+    "symbol": null,
+    "exchange": "543318",
+    "purchasePrice": 1610.0,
+    "quantity": 32.0,
+    "sector": null
+  },
+  {
+    "name": "Deepak Nitrite",
+    "symbol": null,
+    "exchange": "506401",
+    "purchasePrice": 2248.0,
+    "quantity": 27.0,
+    "sector": null
+  },
+  {
+    "name": "Fine Organic",
+    "symbol": null,
+    "exchange": "541557",
+    "purchasePrice": 4284.0,
+    "quantity": 16.0,
+    "sector": null
+  },
+  {
+    "name": "Gravita",
+    "symbol": null,
+    "exchange": "533282",
+    "purchasePrice": 2037.0,
+    "quantity": 8.0,
+    "sector": null
+  },
+  {
+    "name": "SBI Life",
+    "symbol": null,
+    "exchange": "540719",
+    "purchasePrice": 1197.0,
+    "quantity": 49.0,
+    "sector": "Banking & Finance"
+  },
+  {
+    "name": "Infosys",
+    "symbol": null,
+    "exchange": "500209",
+    "purchasePrice": 1647.0,
+    "quantity": 36.0,
+    "sector": "Technology"
+  },
+  {
+    "name": "Happiest Mind",
+    "symbol": null,
+    "exchange": "543237",
+    "purchasePrice": 1103.0,
+    "quantity": 45.0,
+    "sector": "Technology"
+  },
+  {
+    "name": "Easemytrip",
+    "symbol": null,
+    "exchange": "543272",
+    "purchasePrice": 20.0,
+    "quantity": 1332.0,
+    "sector": null
+  }
+]
