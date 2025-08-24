@@ -114,6 +114,10 @@ async function fetchSingleQuote(symbol: string): Promise<{ cmp: number | null }>
     const currentPrice = result?.meta?.regularMarketPrice || result?.meta?.previousClose;
     
     if (currentPrice && typeof currentPrice === 'number') {
+      // Validate price - reject unrealistic values for Indian stocks
+      if (currentPrice <= 0 || currentPrice > 100000) {
+        throw new Error(`Invalid price data: ₹${currentPrice} - outside reasonable range`);
+      }
       return { cmp: currentPrice };
     }
 
