@@ -26,7 +26,7 @@ export function calculatePortfolioRows(
     const gainLoss = presentValue ? presentValue - investment : null;
     const gainLossPercent = gainLoss && investment ? (gainLoss / investment) * 100 : null;
     
-    const hasError = (quote?.error && !quote.cmp) || (metric?.error && !metric.peRatio && !metric.latestEarnings);
+    const hasError = Boolean((quote?.error && !quote.cmp) || (metric?.error && !metric.peRatio && !metric.latestEarnings));
     
     return {
       name: holding.name,

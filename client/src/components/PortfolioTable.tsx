@@ -126,104 +126,102 @@ export default function PortfolioTable({ portfolioRows, sectorGroups, lastUpdate
               const borderColor = getSectorBorderColor(group.sector);
               const isPositive = group.gainLossPercent >= 0;
               
-              return (
-                <div key={group.sector}>
-                  {/* Sector Header */}
-                  <tr className={`bg-gray-25 border-l-4 ${borderColor}`}>
-                    <td colSpan={10} className="px-6 py-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <button 
-                            className="text-gray-600 hover:text-gray-800"
-                            onClick={() => toggleSector(group.sector)}
-                            data-testid={`button-toggle-${group.sector.toLowerCase().replace(/\s+/g, '-')}`}
-                          >
-                            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                          </button>
-                          <h3 className="font-semibold text-gray-900">{group.sector}</h3>
-                          <span className="text-sm text-gray-700 bg-gray-100 px-2 py-1 rounded-full">
-                            {group.holdings.length} holdings
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-mono text-gray-900 font-semibold">
-                            {formatCurrency(group.totalPresentValue)}
-                          </p>
-                          <p className={`text-sm font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                            {formatPercent(group.gainLossPercent)}
-                          </p>
-                        </div>
+              return [
+                // Sector Header
+                <tr key={`${group.sector}-header`} className={`bg-gray-25 border-l-4 ${borderColor}`}>
+                  <td colSpan={10} className="px-6 py-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <button 
+                          className="text-gray-600 hover:text-gray-800 transition-colors"
+                          onClick={() => toggleSector(group.sector)}
+                          data-testid={`button-toggle-${group.sector.toLowerCase().replace(/\s+/g, '-')}`}
+                        >
+                          {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        </button>
+                        <h3 className="font-semibold text-gray-900">{group.sector}</h3>
+                        <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
+                          {group.holdings.length} stocks
+                        </span>
                       </div>
-                    </td>
-                  </tr>
+                      <div className="text-right">
+                        <p className="font-mono text-gray-900 font-bold text-lg">
+                          {formatCurrency(group.totalPresentValue)}
+                        </p>
+                        <p className={`text-sm font-semibold ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                          {formatPercent(group.gainLossPercent)}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>,
+                
+                // Sector Holdings
+                ...(isExpanded ? group.holdings.map((row) => {
+                  const gainLossPositive = (row.gainLoss || 0) >= 0;
                   
-                  {/* Sector Holdings */}
-                  {isExpanded && group.holdings.map((row) => {
-                    const gainLossPositive = (row.gainLoss || 0) >= 0;
-                    
-                    return (
-                      <tr 
-                        key={`${row.name}-${row.symbol}`}
-                        className="hover:bg-gray-50 transition-colors"
-                        data-testid={`row-${row.name.toLowerCase().replace(/\s+/g, '-')}`}
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap sticky left-0 bg-white hover:bg-gray-50 z-10">
-                          <div className="flex flex-col">
-                            <div className="font-medium text-gray-900">{row.name}</div>
-                            <div className="text-sm text-gray-500">{row.symbol || row.exchange}</div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right font-mono text-gray-900">
-                          {formatCurrency(row.purchasePrice)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right font-mono text-gray-900">
-                          {formatNumber(row.quantity)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right font-mono font-semibold text-gray-900">
-                          {formatCurrency(row.investment)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right font-mono text-gray-900">
-                          {formatPercent(row.portfolioPercent)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className="flex items-center justify-end space-x-1">
-                            <span className={`font-mono font-semibold ${row.cmp !== null ? 'text-gray-900' : 'text-gray-400'}`}>
-                              {formatCurrency(row.cmp)}
-                            </span>
-                            {row.cmp !== null && (
-                              <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse"></div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right font-mono font-semibold text-gray-900">
-                          {formatCurrency(row.presentValue)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          {row.gainLoss !== null ? (
-                            <div>
-                              <div className={`font-mono font-semibold ${gainLossPositive ? 'text-green-600' : 'text-red-600'}`}>
-                                {gainLossPositive ? '+' : ''}{formatCurrency(row.gainLoss)}
-                              </div>
-                              <div className={`text-sm font-medium ${gainLossPositive ? 'text-green-600' : 'text-red-600'}`}>
-                                {formatPercent(row.gainLossPercent)}
-                              </div>
-                            </div>
-                          ) : (
-                            <span className="font-mono text-gray-400">—</span>
+                  return (
+                    <tr 
+                      key={`${row.name}-${row.exchange}`}
+                      className="hover:bg-gray-50 transition-colors border-l-2 border-transparent hover:border-blue-200"
+                      data-testid={`row-${row.name.toLowerCase().replace(/\s+/g, '-')}`}
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap sticky left-0 bg-white hover:bg-gray-50 z-10">
+                        <div className="flex flex-col">
+                          <div className="font-semibold text-gray-900 text-sm">{row.name}</div>
+                          <div className="text-xs text-gray-500 font-mono">{row.symbol || row.exchange}</div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right font-mono text-gray-700 text-sm">
+                        {formatCurrency(row.purchasePrice)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right font-mono text-gray-700 text-sm">
+                        {formatNumber(row.quantity)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right font-mono font-semibold text-gray-900">
+                        {formatCurrency(row.investment)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right font-mono text-gray-600 text-sm">
+                        {formatPercent(row.portfolioPercent)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <div className="flex items-center justify-end space-x-1">
+                          <span className={`font-mono font-bold ${row.cmp !== null ? 'text-blue-900' : 'text-gray-400'}`}>
+                            {formatCurrency(row.cmp)}
+                          </span>
+                          {row.cmp !== null && (
+                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                           )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right font-mono text-gray-900">
-                          {row.peRatio !== null ? row.peRatio.toFixed(1) : '—'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right font-mono text-gray-700">
-                          {row.latestEarnings || '—'}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </div>
-              );
-            })}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right font-mono font-bold text-gray-900">
+                        {formatCurrency(row.presentValue)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        {row.gainLoss !== null ? (
+                          <div>
+                            <div className={`font-mono font-bold ${gainLossPositive ? 'text-green-600' : 'text-red-600'}`}>
+                              {gainLossPositive ? '+' : ''}{formatCurrency(row.gainLoss)}
+                            </div>
+                            <div className={`text-xs font-semibold ${gainLossPositive ? 'text-green-600' : 'text-red-600'}`}>
+                              ({formatPercent(row.gainLossPercent)})
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="font-mono text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right font-mono text-gray-700 text-sm">
+                        {row.peRatio !== null ? row.peRatio.toFixed(1) : '—'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right font-mono text-gray-600 text-sm">
+                        {row.latestEarnings || '—'}
+                      </td>
+                    </tr>
+                  );
+                }) : [])
+              ];
+            }).flat()}
           </tbody>
         </table>
       </div>

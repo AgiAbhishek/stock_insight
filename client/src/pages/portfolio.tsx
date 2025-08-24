@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Holding, Quote, Metrics, PortfolioRow, SectorGroup } from "@shared/schema";
 import { calculatePortfolioRows, calculateSectorGroups, calculatePortfolioSummary } from "@/lib/calculations";
 import { getSymbolsFromHoldings } from "@/lib/portfolio";
@@ -24,19 +24,23 @@ export default function Portfolio() {
   const symbolsParam = symbols.join(',');
 
   // Fetch live quotes every 15 seconds
-  const { data: quotes = [], isError: quotesError } = useQuery<Quote[]>({
-    queryKey: ["/api/quotes", { symbols: symbolsParam }],
+  const { data: quotes = [], isError: quotesError, isLoading: quotesLoading } = useQuery<Quote[]>({
+    queryKey: ["/api/quotes", symbolsParam],
     enabled: symbols.length > 0,
     refetchInterval: 15000, // 15 seconds
     staleTime: 10000,
+    retry: 3,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   // Fetch metrics every 60 seconds
-  const { data: metrics = [], isError: metricsError } = useQuery<Metrics[]>({
-    queryKey: ["/api/metrics", { symbols: symbolsParam }],
+  const { data: metrics = [], isError: metricsError, isLoading: metricsLoading } = useQuery<Metrics[]>({
+    queryKey: ["/api/metrics", symbolsParam],
     enabled: symbols.length > 0,
     refetchInterval: 60000, // 60 seconds
     staleTime: 50000,
+    retry: 3,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 60000),
   });
 
   // Calculate portfolio rows and groups
@@ -56,20 +60,41 @@ export default function Portfolio() {
   // Error handling
   const hasErrors = quotesError || metricsError || portfolioRows.some(row => row.hasError);
   
-  if (hasErrors && !showErrorBanner) {
-    setShowErrorBanner(true);
-    setErrorCount(prev => prev + 1);
-  }
+  // Update error state but reset banner on successful data
+  useEffect(() => {
+    if (hasErrors && !showErrorBanner) {
+      setShowErrorBanner(true);
+      setErrorCount(prev => prev + 1);
+    } else if (!hasErrors && showErrorBanner && (quotes.length > 0 || metrics.length > 0)) {
+      setShowErrorBanner(false);
+    }
+  }, [hasErrors, showErrorBanner, quotes.length, metrics.length]);
 
-  const lastUpdated = Math.max(
-    ...quotes.map(q => q.timestamp || 0),
-    ...metrics.map(m => m.timestamp || 0)
-  );
+  const lastUpdated = useMemo(() => {
+    const timestamps = [
+      ...quotes.map(q => q.timestamp || 0),
+      ...metrics.map(m => m.timestamp || 0)
+    ].filter(t => t > 0);
+    return timestamps.length > 0 ? Math.max(...timestamps) : 0;
+  }, [quotes, metrics]);
 
   const formatTime = (timestamp: number) => {
-    if (!timestamp) return "--:--:--";
-    return new Date(timestamp).toLocaleTimeString();
+    if (!timestamp || timestamp === 0 || isNaN(timestamp)) return "—";
+    try {
+      const date = new Date(timestamp);
+      if (isNaN(date.getTime())) return "—";
+      return date.toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit', 
+        second: '2-digit',
+        hour12: false
+      });
+    } catch {
+      return "—";
+    }
   };
+
+  const isLoading = quotesLoading || metricsLoading;
 
   if (holdingsLoading) {
     return (
@@ -95,9 +120,19 @@ export default function Portfolio() {
                   Portfolio Dashboard
                 </h1>
               </div>
-              <div className="hidden sm:flex items-center space-x-2 bg-green-50 px-3 py-1 rounded-full">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium text-green-700">Live Updates Active</span>
+              <div className={`hidden sm:flex items-center space-x-2 px-3 py-1 rounded-full ${
+                hasErrors ? 'bg-red-50' : 'bg-green-50'
+              }`}>
+                <div className={`w-2 h-2 rounded-full ${
+                  isLoading ? 'bg-yellow-500 animate-spin' : 
+                  hasErrors ? 'bg-red-500 animate-pulse' : 
+                  'bg-green-500 animate-pulse'
+                }`}></div>
+                <span className={`text-sm font-medium ${
+                  hasErrors ? 'text-red-700' : 'text-green-700'
+                }`}>
+                  {isLoading ? 'Updating...' : hasErrors ? 'Connection Issues' : 'Live Updates Active'}
+                </span>
               </div>
             </div>
             <div className="flex items-center space-x-4">
