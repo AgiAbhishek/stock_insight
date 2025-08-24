@@ -1,0 +1,197 @@
+You are my coding copilot. Create a complete Next.js (App Router) + TypeScript + Tailwind app that implements a dynamic portfolio dashboard with the spec below. I’ll upload a file named data/portfolio.json (from my sample Excel) which contains my holdings. Use that as the static portfolio base and enrich it with live data.
+
+Functional Requirements
+	•	Load static holdings from data/portfolio.json with fields:
+[
+  {
+    "name": "string",
+    "symbol": "string | null",         // official ticker, e.g., TCS.NS or RELIANCE.NS (can be missing)
+    "exchange": "NSE|BSE|null",
+    "purchasePrice": number,
+    "quantity": number,
+    "sector": "string | null"
+  }
+]
+
+	•	Fetch live CMP from Yahoo Finance (unofficial).
+	•	Fetch P/E ratio and latest earnings from Google Finance (unofficial).
+	•	Every 15s, refresh CMP (and derived fields). Refresh P/E + earnings every 60s.
+	•	Compute per-row fields:
+	•	investment = purchasePrice * quantity
+	•	presentValue = cmp * quantity
+	•	gainLoss = presentValue - investment
+	•	portfolioPercent = (investment / totalInvestment) * 100
+	•	Color code gain/loss (green for gains, red for losses).
+	•	Group by sector and show sector totals: total investment, total PV, sector gain/loss.
+	•	Handle missing symbol/sector gracefully (show “—” and exclude from live fetch but still display static values).
+	•	Show clear error states and keep the last good CMP value if a refresh fails.
+
+Constraints & Non-Functional
+	•	TypeScript everywhere.
+	•	Tailwind CSS for styling (clean, responsive).
+	•	react-table for the grid.
+	•	Optional charts via recharts (mini sparkline column optional).
+	•	Do not expose scraping in the client. All scraping/unofficial libraries must run server-side only.
+	•	Add caching + throttling:
+	•	LRU cache: 15s TTL for quotes, 60s for metrics
+	•	Throttle to avoid rate-limits (e.g., bottleneck)
+	•	Robust error handling and fallbacks (show “—”, tooltip with error, retry on next interval).
+
+Tech Choices
+	•	Next.js (App Router) + TS
+	•	Tailwind CSS
+	•	Data fetching on client via SWR or React Query (your pick). Use polling (refreshInterval/refetchInterval).
+	•	Server routes:
+	•	GET /api/quotes?symbols=... → returns { symbol, cmp }[]
+	•	GET /api/metrics?symbols=... → returns { symbol, peRatio, latestEarnings }[]
+	•	Caching: lru-cache
+	•	Throttling/rate-limit: bottleneck
+	•	Optional Yahoo lib: yahoo-finance2 (if used, keep it server-only)
+	•	Google Finance: server-side fetch of quote page + parse P/E + earnings (HTML/JSON snippet parsing). Keep parsing isolated in a helper so it’s easy to update.
+
+Project Setup (do these steps automatically)
+	1.	Initialize Next.js (App Router) + TS + Tailwind.
+	2.	Install deps: react-table, @tanstack/react-table (or classic), swr or @tanstack/react-query, lru-cache, bottleneck, zod, recharts, and optionally yahoo-finance
+	3.	Create the following structure and files:
+/app
+  /api
+    /quotes/route.ts
+    /metrics/route.ts
+  /page.tsx
+/components
+  PortfolioTable.tsx
+  SectorGroup.tsx
+  ErrorBanner.tsx
+/domain
+  portfolio.ts
+/lib
+  calc.ts
+  symbols.ts
+  cache.ts
+  fetchers.ts
+/data
+  portfolio.json            // I will upload this file
+/styles
+  globals.css
+
+File Details
+
+/domain/portfolio.ts
+	•	Define Exchange, HoldingBase, LiveMetrics, Holding, and a PortfolioRow DTO used by the UI.
+	•	Include Zod schemas to validate portfolio.json rows at runtime and log invalid rows.
+
+/lib/calc.ts
+	•	Pure functions:
+	•	investment(purchasePrice, quantity)
+	•	presentValue(cmp, quantity)
+	•	gainLoss(presentValue, investment)
+	•	portfolioWeights(rows) → fills portfolioPercent from total investment.
+	•	groupBySector(rows) → returns groups + sector totals.
+
+/lib/symbols.ts
+	•	Helpers to normalize tickers:
+	•	If symbol is missing but exchange is present, leave symbol as null and mark row liveFetchable=false.
+	•	Map typical NSE/BSE suffixes (.NS, .BO) and handle already-suffixed symbols.
+
+/lib/cache.ts
+	•	Export LRU caches:
+	•	quotesCache with TTL 15_000 ms
+	•	metricsCache with TTL 60_000 ms
+
+/lib/fetchers.ts (server-only)
+	•	Quotes:
+	•	fetchQuotes(symbols: string[]) → batch fetch CMP.
+	•	Use bottleneck to throttle.
+	•	Use quotesCache to serve cached values.
+	•	Implementation strategy:
+	•	Option A: yahoo-finance2 package: quoteSummary/quote (prefer regularMarketPrice).
+	•	Option B: plain fetch + parse HTML/embedded JSON.
+	•	Metrics:
+	•	fetchMetrics(symbols: string[]) → batch fetch P/E + latest earnings from Google Finance pages (server-side fetch + parse DOM/embedded JSON).
+	•	Cache via metricsCache.
+	•	All fetchers must never run client-side.
+
+/app/api/quotes/route.ts
+	•	Validate symbols param (comma-separated).
+	•	Hit fetchQuotes(symbols); return { symbol, cmp, ts }[].
+	•	On error, return entries with cmp: null and an error field, but status 200.
+
+/app/api/metrics/route.ts
+	•	Similar to quotes; returns { symbol, peRatio, latestEarnings, ts }[].
+
+/app/page.tsx
+	•	Client component that:
+	•	Loads /data/portfolio.json (via a tiny server function or /app/api/holdings if you prefer; simplest is import on server and pass as serialized prop).
+	•	For all rows with symbol, start SWR/React Query polling:
+	•	/api/quotes?symbols=… every 15s
+	•	/api/metrics?symbols=… every 60s
+	•	Merge live data into rows, compute derived fields via calc.ts, and compute sector groups.
+	•	Render <PortfolioTable /> with props:
+	•	rows, groups, lastUpdated, fetchErrorsCount.
+
+/components/PortfolioTable.tsx
+	•	Build a react-table with columns:
+	•	Particulars (name)
+	•	Purchase Price
+	•	Qty
+	•	Investment
+	•	Portfolio (%)
+	•	NSE/BSE
+	•	CMP (live)
+	•	Present Value
+	•	Gain/Loss (green/red)
+	•	P/E Ratio (live)
+	•	Latest Earnings (live)
+	•	Right-align numeric columns; monospace numbers.
+	•	Sticky header; responsive layout.
+	•	Show a small faded old value if latest fetch failed.
+	•	Optional sparkline column using recharts if time permits.
+
+/components/SectorGroup.tsx
+	•	Render each sector’s summary: total investment, total PV, sector gain/loss.
+	•	Collapsible group with child rows (optional).
+
+/components/ErrorBanner.tsx
+	•	If multiple fetch failures happen, show a dismissible banner “Live updates are temporarily unavailable; retrying…”
+
+/data/portfolio.json
+	•	I will upload this file (based on my sample dataset). Your code must work even if some symbol or sector fields are blank by:
+	•	Skipping live fetch for rows missing symbol.
+	•	Including the row in totals with available static values.
+	•	Placing rows with missing sector into an “Uncategorized” group.
+
+UI/UX Details
+	•	Tailwind: clean, compact table on desktop, comfortable on mobile.
+	•	Use green (text-green-600) for positive gainLoss, red (text-red-600) for negative.
+	•	Tooltips on “—” cells to explain what’s missing (e.g., “Symbol not provided” or “Live fetch failed”).
+	•	Show “Last updated: hh:mm:ss” near the header; update each polling cycle.
+
+Performance
+	•	Batch API calls: use the unique set of symbols from the JSON in each cycle (don’t request per-row).
+	•	Memoize all derived arrays/groups; avoid re-renders (use useMemo keyed by the data).
+	•	Avoid fetching metrics on the same cadence as quotes—use 60s for metrics.
+
+Security
+	•	All scraping ONLY on server routes.
+	•	No keys/secrets in the client.
+	•	If any provider requires a key later, use environment variables server-side.
+
+README (generate this file)
+	•	How to run locally (Replit) and build.
+	•	Data file format (data/portfolio.json) and how to fill missing symbol/sector.
+	•	API limitations (Yahoo/Google are unofficial; may break).
+	•	Caching & throttling strategy.
+	•	Known limitations and how to fix parsing if sites change.
+	•	Optional: deploy steps (Vercel).
+
+Acceptance Tests
+	•	With data/portfolio.json present and at least 3 symbols filled (e.g., RELIANCE.NS, TCS.NS, HDFCBANK.NS), the table:
+	•	Shows correct Investment, Present Value, Gain/Loss, Portfolio %.
+	•	Refreshes CMP every 15s; P/E/Earnings every 60s.
+	•	Colors gain/loss correctly.
+	•	Groups by sector and shows sector totals.
+	•	Continues to render if a fetch fails (no crashes).
+	•	LRU cache reduces identical calls within TTL periods.
+	•	Throttling prevents burst traffic.
+
+Please implement all code files now, including minimal but working Yahoo/Google fetchers (use the simplest reliable approach), then tell me where to upload data/portfolio.json. After generation, run the app and show me the preview.
