@@ -1,13 +1,8 @@
 {
-    "functions": {
-      "pages/api/**/*.js": {
-        "maxDuration": 10
-      }
-    },
-    "rewrites": [
-      {
-        "source": "/api/(.*)",
-        "destination": "/pages/api/$1"
-      }
-    ]
+  "version": 2,
+  "functions": {
+    "api/**/*.{js,ts}": {
+      "runtime": "nodejs20.x"
+    }
   }
+}
